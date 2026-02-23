@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Stratus Revit Sync</Name>
+    <Assembly>StratusRevit.Addin.dll</Assembly>
+    <FullClassName>StratusRevit.Addin.StratusRevitApp</FullClassName>
+    <ClientId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</ClientId>
+    <VendorId>SMC_Stratus</VendorId>
+    <VendorDescription>Stratus Revit Integration</VendorDescription>
+  </AddIn>
+</RevitAddIns>
