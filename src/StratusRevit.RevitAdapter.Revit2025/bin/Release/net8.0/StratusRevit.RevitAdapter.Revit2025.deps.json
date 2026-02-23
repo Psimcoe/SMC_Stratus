@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "StratusRevit.RevitAdapter.Revit2025/1.0.0": {
+        "dependencies": {
+          "StratusRevit.RevitAdapter.Abstractions": "1.0.0"
+        },
+        "runtime": {
+          "StratusRevit.RevitAdapter.Revit2025.dll": {}
+        }
+      },
+      "StratusRevit.RevitAdapter.Abstractions/1.0.0": {
+        "runtime": {
+          "StratusRevit.RevitAdapter.Abstractions.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "StratusRevit.RevitAdapter.Revit2025/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "StratusRevit.RevitAdapter.Abstractions/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

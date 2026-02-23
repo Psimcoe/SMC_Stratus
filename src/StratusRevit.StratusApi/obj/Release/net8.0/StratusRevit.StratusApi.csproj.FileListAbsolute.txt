@@ -1,0 +1,16 @@
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/bin/Release/net8.0/StratusRevit.StratusApi.deps.json
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/bin/Release/net8.0/StratusRevit.StratusApi.dll
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/bin/Release/net8.0/StratusRevit.StratusApi.pdb
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/bin/Release/net8.0/StratusRevit.RevitAdapter.Abstractions.dll
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/bin/Release/net8.0/StratusRevit.RevitAdapter.Abstractions.pdb
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/StratusRevit.StratusApi.csproj.AssemblyReference.cache
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/StratusRevit.StratusApi.GeneratedMSBuildEditorConfig.editorconfig
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/StratusRevit.StratusApi.AssemblyInfoInputs.cache
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/StratusRevit.StratusApi.AssemblyInfo.cs
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/StratusRevit.StratusApi.csproj.CoreCompileInputs.cache
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/StratusRevit.StratusApi.sourcelink.json
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/StratusR.4FBFE961.Up2Date
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/StratusRevit.StratusApi.dll
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/refint/StratusRevit.StratusApi.dll
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/StratusRevit.StratusApi.pdb
+/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/Release/net8.0/ref/StratusRevit.StratusApi.dll

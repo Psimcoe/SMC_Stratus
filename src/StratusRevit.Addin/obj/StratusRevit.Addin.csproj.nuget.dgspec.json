@@ -1,0 +1,424 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Addin/StratusRevit.Addin.csproj": {}
+  },
+  "projects": {
+    "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Addin/StratusRevit.Addin.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Addin/StratusRevit.Addin.csproj",
+        "projectName": "StratusRevit.Addin",
+        "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Addin/StratusRevit.Addin.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Addin/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/runner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj": {
+                "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj"
+              },
+              "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Revit2025/StratusRevit.RevitAdapter.Revit2025.csproj": {
+                "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Revit2025/StratusRevit.RevitAdapter.Revit2025.csproj"
+              },
+              "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.SyncEngine/StratusRevit.SyncEngine.csproj": {
+                "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.SyncEngine/StratusRevit.SyncEngine.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Http": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Logging.Console": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Domain/StratusRevit.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Domain/StratusRevit.Domain.csproj",
+        "projectName": "StratusRevit.Domain",
+        "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Domain/StratusRevit.Domain.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Domain/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/runner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj": {
+                "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj",
+        "projectName": "StratusRevit.RevitAdapter.Abstractions",
+        "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/runner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Revit2025/StratusRevit.RevitAdapter.Revit2025.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Revit2025/StratusRevit.RevitAdapter.Revit2025.csproj",
+        "projectName": "StratusRevit.RevitAdapter.Revit2025",
+        "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Revit2025/StratusRevit.RevitAdapter.Revit2025.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Revit2025/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/runner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj": {
+                "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/StratusRevit.StratusApi.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/StratusRevit.StratusApi.csproj",
+        "projectName": "StratusRevit.StratusApi",
+        "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/StratusRevit.StratusApi.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/runner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj": {
+                "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.Extensions.Http": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Logging.Abstractions": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.SyncEngine/StratusRevit.SyncEngine.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.SyncEngine/StratusRevit.SyncEngine.csproj",
+        "projectName": "StratusRevit.SyncEngine",
+        "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.SyncEngine/StratusRevit.SyncEngine.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.SyncEngine/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/runner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Domain/StratusRevit.Domain.csproj": {
+                "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.Domain/StratusRevit.Domain.csproj"
+              },
+              "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj": {
+                "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj"
+              },
+              "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/StratusRevit.StratusApi.csproj": {
+                "projectPath": "/home/runner/work/SMC_Stratus/SMC_Stratus/src/StratusRevit.StratusApi/StratusRevit.StratusApi.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.Extensions.Logging.Abstractions": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StratusRevit.Addin/StratusRevit.Addin.csproj" />
+    <Project Path="src/StratusRevit.Domain/StratusRevit.Domain.csproj" />
+    <Project Path="src/StratusRevit.RevitAdapter.Abstractions/StratusRevit.RevitAdapter.Abstractions.csproj" />
+    <Project Path="src/StratusRevit.RevitAdapter.Revit2025/StratusRevit.RevitAdapter.Revit2025.csproj" />
+    <Project Path="src/StratusRevit.StratusApi/StratusRevit.StratusApi.csproj" />
+    <Project Path="src/StratusRevit.SyncEngine/StratusRevit.SyncEngine.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/StratusRevit.Tests/StratusRevit.Tests.csproj" />
+  </Folder>
+</Solution>

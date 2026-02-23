@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "conflictPolicy": "RevitWins",
+  "fieldMappings": [
+    {
+      "revitParameter": "STRATUS_STATUS",
+      "stratusField": "trackingStatus",
+      "isTrackingStatus": true,
+      "normalization": { "trim": true },
+      "allowOverwriteNonEmpty": false
+    },
+    {
+      "revitParameter": "Comments",
+      "stratusField": "Comments",
+      "isTrackingStatus": false,
+      "normalization": { "trim": true },
+      "allowOverwriteNonEmpty": false
+    }
+  ]
+}
