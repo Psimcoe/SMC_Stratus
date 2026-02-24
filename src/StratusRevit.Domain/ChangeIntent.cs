@@ -1,6 +1,11 @@
 namespace StratusRevit.Domain;
 
-public record FieldChange(string FieldName, string? OldValue, string NewValue);
+public record FieldChange(
+    string FieldName,
+    string? OldValue,
+    string NewValue,
+    bool IsCompanyField = false,
+    string? CompanyFieldId = null);
 
 public record ChangeIntent(
     string StratusObjectId,

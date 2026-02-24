@@ -27,7 +27,7 @@ public class SyncEngine : ISyncEngine
     public async Task<SyncReport> DryRunAsync(IReadOnlyList<RevitElementData> elements, CancellationToken ct = default)
     {
         _logger.LogInformation("DryRun starting for {Count} elements", elements.Count);
-        var intents = _mapper.Map(elements, "Assembly", new Dictionary<string, string?>());
+        var intents = _mapper.Map(elements, "Part", new Dictionary<string, string?>());
         var results = intents.SelectMany(ToChangeResults).ToList();
         return new SyncReport(
             GeneratedAt: DateTimeOffset.UtcNow,
@@ -51,7 +51,11 @@ public class SyncEngine : ISyncEngine
         var editableFieldNames = new HashSet<string>(fields.Where(f => f.IsEditable).Select(f => f.Name));
 
         var validator = new ChangeValidator(validStatusIds, editableFieldNames);
-        var intents = _mapper.Map(elements, "Assembly", new Dictionary<string, string?>());
+        var intents = _mapper.Map(elements, "Part", new Dictionary<string, string?>());
+
+        // Resolve any QR-code based IDs before validation/push
+        intents = await ResolveQrCodeIdsAsync(intents, ct);
+
         var validated = validator.ValidateAll(intents);
 
         var succeeded = new List<ChangeResult>();
@@ -95,12 +99,49 @@ public class SyncEngine : ISyncEngine
         );
     }
 
+    // ──────────────── QR-code resolution ────────────────
+
+    /// <summary>
+    /// For any ChangeIntent whose StratusObjectId starts with "qr:", resolve
+    /// the real Part ID via the QR-code lookup API.
+    /// </summary>
+    private async Task<IReadOnlyList<ChangeIntent>> ResolveQrCodeIdsAsync(
+        IReadOnlyList<ChangeIntent> intents, CancellationToken ct)
+    {
+        var resolved = new List<ChangeIntent>(intents.Count);
+        foreach (var intent in intents)
+        {
+            if (intent.StratusObjectId.StartsWith("qr:", StringComparison.Ordinal))
+            {
+                var qrCode = intent.StratusObjectId.Substring(3);
+                try
+                {
+                    var part = await _apiClient.GetPartByQrCodeAsync(qrCode, ct);
+                    if (part is not null)
+                    {
+                        resolved.Add(intent with { StratusObjectId = part.Id });
+                        continue;
+                    }
+                    _logger.LogWarning("QR code '{QrCode}' not found in Stratus (element {ElementId})", qrCode, intent.RevitElementId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to resolve QR code '{QrCode}' for element {ElementId}", qrCode, intent.RevitElementId);
+                }
+            }
+            resolved.Add(intent);
+        }
+        return resolved.AsReadOnly();
+    }
+
+    // ──────────────── Apply changes ────────────────
+
     private async Task<ChangeResult> ApplyTrackingStatusAsync(ChangeIntent intent, CancellationToken ct)
     {
         try
         {
             var req = new TrackingStatusUpdateRequest { TrackingStatusId = intent.TrackingStatusChange!.NewValue };
-            await _apiClient.UpdateAssemblyTrackingStatusAsync(intent.StratusObjectId, req, ct);
+            await _apiClient.UpdatePartTrackingStatusAsync(intent.StratusObjectId, req, ct: ct);
             return new ChangeResult(intent.StratusObjectId, intent.RevitElementId,
                 intent.TrackingStatusChange.FieldName,
                 intent.TrackingStatusChange.OldValue, intent.TrackingStatusChange.NewValue,
@@ -119,7 +160,17 @@ public class SyncEngine : ISyncEngine
     {
         try
         {
-            await _apiClient.UpdateAssemblyFieldAsync(intent.StratusObjectId, fieldChange.FieldName, fieldChange.NewValue, ct);
+            if (fieldChange.IsCompanyField && fieldChange.CompanyFieldId is not null)
+            {
+                // Company-level field → PATCH /v2/part/{id}/field
+                await _apiClient.UpdatePartFieldAsync(intent.StratusObjectId, fieldChange.CompanyFieldId, fieldChange.NewValue, ct);
+            }
+            else
+            {
+                // User-defined property → PATCH /v1/part/{id}/property
+                await _apiClient.UpdatePartPropertyAsync(intent.StratusObjectId, fieldChange.FieldName, fieldChange.NewValue, ct);
+            }
+
             return new ChangeResult(intent.StratusObjectId, intent.RevitElementId,
                 fieldChange.FieldName, fieldChange.OldValue, fieldChange.NewValue,
                 true, null, DateTimeOffset.UtcNow);

@@ -17,6 +17,8 @@ public class StratusApiClient : IStratusApiClient
         _logger = logger;
     }
 
+    // ────────────────────── internal helpers ──────────────────────
+
     private HttpRequestMessage BuildRequest(HttpMethod method, string relativeUrl, HttpContent? content = null)
     {
         var req = new HttpRequestMessage(method, relativeUrl);
@@ -72,6 +74,8 @@ public class StratusApiClient : IStratusApiClient
         throw last!;
     }
 
+    // ────────────────────── Company ──────────────────────
+
     public async Task<IReadOnlyList<TrackingStatusDto>> GetTrackingStatusesAsync(CancellationToken ct = default)
     {
         var result = await SendWithRetryAsync<List<TrackingStatusDto>>(
@@ -88,37 +92,15 @@ public class StratusApiClient : IStratusApiClient
         return result?.AsReadOnly() ?? (IReadOnlyList<FieldDto>)Array.Empty<FieldDto>();
     }
 
-    public async Task<TrackingStatusUpdateResponse> UpdateAssemblyTrackingStatusAsync(
-        string assemblyId, TrackingStatusUpdateRequest request, CancellationToken ct = default)
-    {
-        return await SendWithRetryAsync<TrackingStatusUpdateResponse>(
-            () => BuildRequest(HttpMethod.Post, $"v1/assembly/{assemblyId}/trackingstatus",
-                JsonContent.Create(request)),
-            ct);
-    }
+    // ────────────────────── Part – Read ──────────────────────
 
-    public async Task UpdateAssemblyFieldAsync(string assemblyId, string fieldId, string value, CancellationToken ct = default)
-    {
-        await SendWithRetryAsync(
-            () => BuildRequest(HttpMethod.Post, $"v1/assembly/{assemblyId}/field",
-                JsonContent.Create(new FieldValuePair { Key = fieldId, Value = value })),
-            ct);
-    }
-
-    public async Task UpdateAssemblyFieldsAsync(string assemblyId, IReadOnlyList<FieldValuePair> fields, CancellationToken ct = default)
-    {
-        await SendWithRetryAsync(
-            () => BuildRequest(HttpMethod.Post, $"v1/assembly/{assemblyId}/fields",
-                JsonContent.Create(fields)),
-            ct);
-    }
-
-    public async Task<AssemblyDto?> GetAssemblyAsync(string assemblyId, CancellationToken ct = default)
+    public async Task<PartDto?> GetPartAsync(string partId, bool includeStratusProperties = false, CancellationToken ct = default)
     {
         try
         {
-            return await SendWithRetryAsync<AssemblyDto>(
-                () => BuildRequest(HttpMethod.Get, $"v1/assembly/{assemblyId}"),
+            var qs = includeStratusProperties ? "?includeStratusProperties=true" : "";
+            return await SendWithRetryAsync<PartDto>(
+                () => BuildRequest(HttpMethod.Get, $"v2/part/{partId}{qs}"),
                 ct);
         }
 #if NET5_0_OR_GREATER
@@ -129,9 +111,84 @@ public class StratusApiClient : IStratusApiClient
 #else
         catch (HttpRequestException)
         {
-            // On .NET Framework, HttpRequestException doesn't expose StatusCode.
             return null;
         }
 #endif
+    }
+
+    public async Task<PartDto?> GetPartByQrCodeAsync(string qrCode, CancellationToken ct = default)
+    {
+        try
+        {
+            return await SendWithRetryAsync<PartDto>(
+                () => BuildRequest(HttpMethod.Get, $"v1/part/{Uri.EscapeDataString(qrCode)}"),
+                ct);
+        }
+#if NET5_0_OR_GREATER
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+#else
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+#endif
+    }
+
+    public async Task<PagedResponse<PartDto>> GetPartsAsync(int pageOffset = 0, int pageLimit = 50, CancellationToken ct = default)
+    {
+        return await SendWithRetryAsync<PagedResponse<PartDto>>(
+            () => BuildRequest(HttpMethod.Get, $"v1/part?pageOffset={pageOffset}&pageLimit={pageLimit}"),
+            ct);
+    }
+
+    // ────────────────────── Part – Tracking Status ──────────────────────
+
+    public async Task<TrackingStatusUpdateResponse> UpdatePartTrackingStatusAsync(
+        string partId, TrackingStatusUpdateRequest request, bool isCut = true, CancellationToken ct = default)
+    {
+        var query = isCut ? "" : "?isCut=false";
+        return await SendWithRetryAsync<TrackingStatusUpdateResponse>(
+            () => BuildRequest(HttpMethod.Post, $"v1/part/{partId}/tracking-status{query}",
+                JsonContent.Create(request)),
+            ct);
+    }
+
+    // ────────────────────── Part – Properties ──────────────────────
+
+    public async Task<FieldValuePair> UpdatePartPropertyAsync(string partId, string key, string value, CancellationToken ct = default)
+    {
+        return await SendWithRetryAsync<FieldValuePair>(
+            () => BuildRequest(new HttpMethod("PATCH"), $"v1/part/{partId}/property",
+                JsonContent.Create(new FieldValuePair { Key = key, Value = value })),
+            ct);
+    }
+
+    public async Task UpdatePartPropertiesBulkAsync(IReadOnlyList<BulkPropertyUpdate> updates, CancellationToken ct = default)
+    {
+        await SendWithRetryAsync(
+            () => BuildRequest(new HttpMethod("PATCH"), "v1/part/properties",
+                JsonContent.Create(updates)),
+            ct);
+    }
+
+    // ────────────────────── Part – Company Fields (v2) ──────────────────────
+
+    public async Task UpdatePartFieldAsync(string partId, string fieldId, string? value, CancellationToken ct = default)
+    {
+        await SendWithRetryAsync(
+            () => BuildRequest(new HttpMethod("PATCH"), $"v2/part/{partId}/field",
+                JsonContent.Create(new FieldUpdateRequest { FieldId = fieldId, Value = value })),
+            ct);
+    }
+
+    public async Task UpdatePartFieldsAsync(string partId, FieldsUpdateRequest fields, CancellationToken ct = default)
+    {
+        await SendWithRetryAsync(
+            () => BuildRequest(new HttpMethod("PATCH"), $"v2/part/{partId}/fields",
+                JsonContent.Create(fields)),
+            ct);
     }
 }

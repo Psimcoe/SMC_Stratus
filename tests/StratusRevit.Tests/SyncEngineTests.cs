@@ -46,7 +46,7 @@ public class SyncEngineTests
 
         Assert.True(report.IsDryRun);
         Assert.Equal(1, report.TotalElements);
-        mockApi.Verify(x => x.UpdateAssemblyTrackingStatusAsync(It.IsAny<string>(), It.IsAny<TrackingStatusUpdateRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        mockApi.Verify(x => x.UpdatePartTrackingStatusAsync(It.IsAny<string>(), It.IsAny<TrackingStatusUpdateRequest>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

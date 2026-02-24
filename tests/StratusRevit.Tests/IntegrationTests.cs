@@ -273,6 +273,129 @@ public class IntegrationTests
         var ex = await Record.ExceptionAsync(() => engine.PushUpdatesAsync(elements));
         Assert.Null(ex);
     }
+
+    // -----------------------------------------------------------------------
+    // Company-field mapping uses PATCH /v2/part/{id}/field
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task FullPipeline_CompanyField_RoutesThroughFieldEndpoint()
+    {
+        var config = new MappingConfig
+        {
+            ConflictPolicy = ConflictPolicy.RevitWins,
+            FieldMappings = new List<FieldMappingRule>
+            {
+                new()
+                {
+                    RevitParameter = "Location",
+                    StratusField = "Location",
+                    IsCompanyField = true,
+                    CompanyFieldId = "f-2",
+                    AllowOverwriteNonEmpty = true
+                }
+            }
+        };
+
+        var handler = FakeStratusHandler.WithDefaults();
+        var engine = CreateEngine(handler, config);
+
+        var elements = new List<RevitElementData>
+        {
+            new("e1", "u1", "Part", "Beam",
+                new Dictionary<string, string?> { ["Location"] = "Level 2" })
+        };
+
+        var report = await engine.PushUpdatesAsync(elements);
+        Assert.Equal(1, report.ChangesSucceeded);
+
+        // Verify the /v2/part/{id}/field route was called
+        Assert.Contains(handler.RequestLog, r => r.Url.Contains("/field"));
+    }
+
+    // -----------------------------------------------------------------------
+    // QR-code ID resolution flows through the engine
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task FullPipeline_QrCodeId_ResolvesBeforePush()
+    {
+        var config = new MappingConfig
+        {
+            ConflictPolicy = ConflictPolicy.RevitWins,
+            StratusQrCodeParameter = "STRATUS QR Code",
+            FieldMappings = new List<FieldMappingRule>
+            {
+                new()
+                {
+                    RevitParameter = "Comments",
+                    StratusField = "Comments",
+                    AllowOverwriteNonEmpty = true
+                }
+            }
+        };
+
+        var handler = FakeStratusHandler.WithDefaults();
+        var engine = CreateEngine(handler, config);
+
+        var elements = new List<RevitElementData>
+        {
+            new("e1", "u1", "Part", "Beam",
+                new Dictionary<string, string?>
+                {
+                    ["STRATUS QR Code"] = "http://gtp.one/ABC123",
+                    ["Comments"] = "Updated"
+                })
+        };
+
+        var report = await engine.PushUpdatesAsync(elements);
+
+        // The QR lookup should have been called
+        Assert.Contains(handler.RequestLog, r => r.Url.Contains("v1/part/"));
+        Assert.True(report.ChangesSucceeded >= 1);
+    }
+
+    // -----------------------------------------------------------------------
+    // stratusIdParameter picks up the Part ID from a Revit parameter
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task FullPipeline_StratusIdParameter_UsesConfiguredParam()
+    {
+        var config = new MappingConfig
+        {
+            ConflictPolicy = ConflictPolicy.RevitWins,
+            StratusIdParameter = "STRATUS Item Number",
+            FieldMappings = new List<FieldMappingRule>
+            {
+                new()
+                {
+                    RevitParameter = "STRATUS_STATUS",
+                    StratusField = "trackingStatus",
+                    IsTrackingStatus = true,
+                    AllowOverwriteNonEmpty = true
+                }
+            }
+        };
+
+        var handler = FakeStratusHandler.WithDefaults();
+        var engine = CreateEngine(handler, config);
+
+        var elements = new List<RevitElementData>
+        {
+            new("e1", "unique-revit-id", "Part", "Beam",
+                new Dictionary<string, string?>
+                {
+                    ["STRATUS Item Number"] = "stratus-part-guid-here",
+                    ["STRATUS_STATUS"] = "ts-fabricating"
+                })
+        };
+
+        var dryReport = await engine.DryRunAsync(elements);
+        Assert.Equal(1, dryReport.ChangesPlanned);
+        // The StratusObjectId should be the value from the parameter, not the Revit UniqueId
+        Assert.Equal("stratus-part-guid-here", dryReport.Results[0].StratusObjectId);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -329,9 +452,11 @@ public class FakeStratusHandler : HttpMessageHandler
     /// <summary>
     /// Preconfigured handler that returns:
     ///   - valid tracking statuses (including ts-fabricating)
-    ///   - editable company fields (Comments)
+    ///   - editable company fields (Comments, Location)
     ///   - success on tracking status updates
-    ///   - success on field updates
+    ///   - success on property updates
+    ///   - success on v2 field updates
+    ///   - QR-code lookup returns a resolved Part
     /// </summary>
     public static FakeStratusHandler WithDefaults()
     {
@@ -349,13 +474,39 @@ public class FakeStratusHandler : HttpMessageHandler
             new { id = "f-2", name = "Location", displayName = "Location", isEditable = true }
         }));
 
-        h.AddRoute("trackingstatus", HttpStatusCode.OK, JsonSerializer.Serialize(new
+        h.AddRoute("tracking-status", HttpStatusCode.OK, JsonSerializer.Serialize(new
         {
             trackingStatusId = "ts-fabricating",
             trackingLogEntryIdResult = "log-" + Guid.NewGuid().ToString("N")[..8]
         }));
 
+        h.AddRoute("/property", HttpStatusCode.OK, JsonSerializer.Serialize(new
+        {
+            key = "Comments",
+            value = "test"
+        }));
+
+        // PATCH /v2/part/{id}/field(s)
         h.AddRoute("/field", HttpStatusCode.OK, "{}");
+
+        // GET /v1/part/{qrCode} – QR-code lookup returns a resolved part
+        h.AddRoute("v1/part/", req =>
+        {
+            var path = req.RequestUri?.PathAndQuery ?? "";
+            // Only match QR-code lookups (path like /v1/part/http%3A...)
+            // Skip if it looks like a known sub-resource (tracking-status, property, etc.)
+            if (path.Contains("tracking-status") || path.Contains("property") || path.Contains("field"))
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json")
+                };
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(new { id = "resolved-part-id-001", cadId = "cad-1" }),
+                    System.Text.Encoding.UTF8, "application/json")
+            };
+        });
 
         return h;
     }
@@ -369,11 +520,11 @@ public class FakeStratusHandler : HttpMessageHandler
         return h;
     }
 
-    /// <summary>Returns a handler where POST requests to assembly endpoints return an error.</summary>
+    /// <summary>Returns a handler where POST/PATCH requests to part endpoints return an error.</summary>
     public static FakeStratusHandler WithPostFailure(HttpStatusCode failureCode)
     {
         var h = WithDefaults();
-        h.AddRoute("trackingstatus", req =>
+        h.AddRoute("tracking-status", req =>
         {
             if (req.Method == HttpMethod.Post)
                 return new HttpResponseMessage(failureCode)
@@ -385,9 +536,9 @@ public class FakeStratusHandler : HttpMessageHandler
                 Content = new StringContent("[]", System.Text.Encoding.UTF8, "application/json")
             };
         });
-        h.AddRoute("/field", req =>
+        h.AddRoute("/property", req =>
         {
-            if (req.Method == HttpMethod.Post)
+            if (req.Method == new HttpMethod("PATCH"))
                 return new HttpResponseMessage(failureCode)
                 {
                     Content = new StringContent("{\"error\":\"simulated failure\"}", System.Text.Encoding.UTF8, "application/json")

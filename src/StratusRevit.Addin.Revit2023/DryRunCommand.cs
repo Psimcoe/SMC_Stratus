@@ -37,10 +37,38 @@ public class DryRunCommand : IExternalCommand
             var selected = revitContext.GetSelectedElements();
             var report = engine.DryRunAsync(selected).GetAwaiter().GetResult();
 
+            // Diagnostic: show parameter names/values for first selected element
+            var diagMsg = "";
+            if (selected.Count > 0)
+            {
+                var elem = selected[0];
+                diagMsg = $"\n\n--- DEBUG: Element '{elem.Name}' ---\n" +
+                          $"Category: {elem.ElementType}\n" +
+                          $"UniqueId: {elem.UniqueId}\n" +
+                          $"Parameters ({elem.Parameters.Count}):\n";
+                foreach (var kvp in elem.Parameters)
+                {
+                    if (kvp.Key.IndexOf("STRATUS", StringComparison.OrdinalIgnoreCase) >= 0
+                        || kvp.Key.IndexOf("stratus", StringComparison.OrdinalIgnoreCase) >= 0
+                        || kvp.Key.IndexOf("Comment", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        diagMsg += $"  [{kvp.Key}] = [{kvp.Value}]\n";
+                    }
+                }
+
+                // Also show mapping config rules for comparison
+                diagMsg += $"\nMapping rules looking for:\n";
+                foreach (var rule in mappingConfig.FieldMappings)
+                {
+                    var found = elem.Parameters.ContainsKey(rule.RevitParameter);
+                    diagMsg += $"  '{rule.RevitParameter}' -> {(found ? "FOUND" : "NOT FOUND")}\n";
+                }
+            }
+
             TaskDialog.Show("Stratus – Dry Run",
                 $"Elements: {report.TotalElements}\n" +
                 $"Changes planned: {report.ChangesPlanned}\n\n" +
-                "No data was sent to Stratus.");
+                "No data was sent to Stratus." + diagMsg);
 
             return Result.Succeeded;
         }
