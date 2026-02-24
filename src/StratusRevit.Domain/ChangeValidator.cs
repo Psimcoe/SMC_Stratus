@@ -2,15 +2,15 @@ namespace StratusRevit.Domain;
 
 public class ChangeValidator
 {
-    private readonly IReadOnlySet<string> _validTrackingStatusIds;
-    private readonly IReadOnlySet<string> _editableFieldNames;
+    private readonly HashSet<string> _validTrackingStatusIds;
+    private readonly HashSet<string> _editableFieldNames;
 
     public ChangeValidator(
-        IReadOnlySet<string> validTrackingStatusIds,
-        IReadOnlySet<string> editableFieldNames)
+        IEnumerable<string> validTrackingStatusIds,
+        IEnumerable<string> editableFieldNames)
     {
-        _validTrackingStatusIds = validTrackingStatusIds;
-        _editableFieldNames = editableFieldNames;
+        _validTrackingStatusIds = new HashSet<string>(validTrackingStatusIds);
+        _editableFieldNames = new HashSet<string>(editableFieldNames);
     }
 
     public ChangeIntent Validate(ChangeIntent intent)

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Stratus Revit Sync</Name>
+    <Assembly>StratusRevit\StratusRevit.Addin.Revit2023.dll</Assembly>
+    <FullClassName>StratusRevit.Addin.Revit2023.StratusRevitApp</FullClassName>
+    <ClientId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</ClientId>
+    <VendorId>SMC_Stratus</VendorId>
+    <VendorDescription>Stratus Revit Integration</VendorDescription>
+  </AddIn>
+  <AddIn Type="Command">
+    <Name>Stratus Dry Run</Name>
+    <Assembly>StratusRevit\StratusRevit.Addin.Revit2023.dll</Assembly>
+    <FullClassName>StratusRevit.Addin.Revit2023.DryRunCommand</FullClassName>
+    <ClientId>b2c3d4e5-f6a7-8901-bcde-f12345678901</ClientId>
+    <VendorId>SMC_Stratus</VendorId>
+    <VendorDescription>Preview changes without pushing to Stratus</VendorDescription>
+  </AddIn>
+  <AddIn Type="Command">
+    <Name>Stratus Push Updates</Name>
+    <Assembly>StratusRevit\StratusRevit.Addin.Revit2023.dll</Assembly>
+    <FullClassName>StratusRevit.Addin.Revit2023.PushUpdatesCommand</FullClassName>
+    <ClientId>c3d4e5f6-a7b8-9012-cdef-123456789012</ClientId>
+    <VendorId>SMC_Stratus</VendorId>
+    <VendorDescription>Push selected element changes to Stratus</VendorDescription>
+  </AddIn>
+</RevitAddIns>

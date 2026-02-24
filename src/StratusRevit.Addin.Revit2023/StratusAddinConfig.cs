@@ -1,11 +1,13 @@
+using System;
+using System.IO;
 using System.Text.Json;
 
-namespace StratusRevit.Addin;
+namespace StratusRevit.Addin.Revit2023;
 
 public class StratusAddinConfig
 {
     public string BaseUrl { get; set; } = "https://api.gtpstratus.com";
-    public string ApiKey { get; set; } = "0252c170-0846-4e8d-ba3e-f2cce3015f86";
+    public string ApiKey { get; set; } = "";
     public int TimeoutSeconds { get; set; } = 30;
     public int MaxRetries { get; set; } = 3;
     public string MappingConfigPath { get; set; } = "mapping.json";

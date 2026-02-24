@@ -121,9 +121,17 @@ public class StratusApiClient : IStratusApiClient
                 () => BuildRequest(HttpMethod.Get, $"v1/assembly/{assemblyId}"),
                 ct);
         }
+#if NET5_0_OR_GREATER
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return null;
         }
+#else
+        catch (HttpRequestException)
+        {
+            // On .NET Framework, HttpRequestException doesn't expose StatusCode.
+            return null;
+        }
+#endif
     }
 }

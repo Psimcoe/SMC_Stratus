@@ -47,8 +47,8 @@ public class SyncEngine : ISyncEngine
         var statuses = await _apiClient.GetTrackingStatusesAsync(ct);
         var fields = await _apiClient.GetCompanyFieldsAsync(ct);
 
-        var validStatusIds = statuses.Select(s => s.Id).ToHashSet();
-        var editableFieldNames = fields.Where(f => f.IsEditable).Select(f => f.Name).ToHashSet();
+        var validStatusIds = new HashSet<string>(statuses.Select(s => s.Id));
+        var editableFieldNames = new HashSet<string>(fields.Where(f => f.IsEditable).Select(f => f.Name));
 
         var validator = new ChangeValidator(validStatusIds, editableFieldNames);
         var intents = _mapper.Map(elements, "Assembly", new Dictionary<string, string?>());
