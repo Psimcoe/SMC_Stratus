@@ -1,20 +1,21 @@
 {
   "version": 1,
   "conflictPolicy": "RevitWins",
+  "stratusQrCodeParameter": "STRATUS QR Code",
   "fieldMappings": [
     {
-      "revitParameter": "STRATUS_STATUS",
+      "revitParameter": "STRATUS Status",
       "stratusField": "trackingStatus",
       "isTrackingStatus": true,
       "normalization": { "trim": true },
-      "allowOverwriteNonEmpty": false
+      "allowOverwriteNonEmpty": true
     },
     {
-      "revitParameter": "Comments",
-      "stratusField": "Comments",
+      "revitParameter": "Stratus Comments",
+      "stratusField": "Stratus_Comments",
       "isTrackingStatus": false,
       "normalization": { "trim": true },
-      "allowOverwriteNonEmpty": false
+      "allowOverwriteNonEmpty": true
     }
   ]
 }

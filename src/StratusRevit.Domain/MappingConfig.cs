@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace StratusRevit.Domain;
@@ -31,6 +32,7 @@ public class MappingConfig
     public List<FieldMappingRule> FieldMappings { get; set; } = new();
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ConflictPolicy
 {
     RevitWins,

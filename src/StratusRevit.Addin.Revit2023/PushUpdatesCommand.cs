@@ -22,8 +22,13 @@ public class PushUpdatesCommand : IExternalCommand
             var config = StratusAddinConfig.LoadFromFile(configPath);
 
             var mappingPath = Path.Combine(addinDir, config.MappingConfigPath);
+            var jsonOpts = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+            };
             var mappingConfig = File.Exists(mappingPath)
-                ? System.Text.Json.JsonSerializer.Deserialize<Domain.MappingConfig>(File.ReadAllText(mappingPath))
+                ? System.Text.Json.JsonSerializer.Deserialize<Domain.MappingConfig>(File.ReadAllText(mappingPath), jsonOpts)
                   ?? new Domain.MappingConfig()
                 : new Domain.MappingConfig();
 

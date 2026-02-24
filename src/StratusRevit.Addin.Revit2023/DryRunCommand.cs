@@ -22,8 +22,13 @@ public class DryRunCommand : IExternalCommand
             var config = StratusAddinConfig.LoadFromFile(configPath);
 
             var mappingPath = Path.Combine(addinDir, config.MappingConfigPath);
+            var jsonOpts = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+            };
             var mappingConfig = File.Exists(mappingPath)
-                ? System.Text.Json.JsonSerializer.Deserialize<Domain.MappingConfig>(File.ReadAllText(mappingPath))
+                ? System.Text.Json.JsonSerializer.Deserialize<Domain.MappingConfig>(File.ReadAllText(mappingPath), jsonOpts)
                   ?? new Domain.MappingConfig()
                 : new Domain.MappingConfig();
 
@@ -56,12 +61,18 @@ public class DryRunCommand : IExternalCommand
                     }
                 }
 
-                // Also show mapping config rules for comparison
-                diagMsg += $"\nMapping rules looking for:\n";
+                // Show mapping config rules for comparison
+                diagMsg += $"\nMapping rules loaded: {mappingConfig.FieldMappings.Count}\n";
+                diagMsg += $"Conflict policy: {mappingConfig.ConflictPolicy}\n";
+                diagMsg += $"Stratus ID param: {mappingConfig.StratusIdParameter ?? "(none, using UniqueId)"}\n";
+                diagMsg += $"QR code param: {mappingConfig.StratusQrCodeParameter ?? "(none)"}\n\n";
                 foreach (var rule in mappingConfig.FieldMappings)
                 {
-                    var found = elem.Parameters.ContainsKey(rule.RevitParameter);
-                    diagMsg += $"  '{rule.RevitParameter}' -> {(found ? "FOUND" : "NOT FOUND")}\n";
+                    var found = elem.Parameters.TryGetValue(rule.RevitParameter, out var val);
+                    diagMsg += $"  '{rule.RevitParameter}' -> {(found ? $"FOUND = [{val}]" : "NOT FOUND")}";
+                    if (rule.IsTrackingStatus) diagMsg += " [tracking-status]";
+                    if (rule.IsCompanyField) diagMsg += $" [company-field:{rule.CompanyFieldId}]";
+                    diagMsg += "\n";
                 }
             }
 
