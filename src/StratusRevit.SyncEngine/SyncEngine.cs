@@ -47,15 +47,27 @@ public class SyncEngine : ISyncEngine
         var statuses = await _apiClient.GetTrackingStatusesAsync(ct);
         var fields = await _apiClient.GetCompanyFieldsAsync(ct);
 
-        var validStatusIds = new HashSet<string>(statuses.Select(s => s.Id));
+        // Build a name→ID lookup so Revit display names can be resolved to GUIDs
+        var statusNameToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var validStatusIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var s in statuses)
+        {
+            validStatusIds.Add(s.Id);
+            if (!string.IsNullOrEmpty(s.Name))
+                statusNameToId[s.Name] = s.Id;
+        }
+
         var editableFieldNames = new HashSet<string>(fields.Where(f => f.IsEditable).Select(f => f.Name));
 
-        var validator = new ChangeValidator(validStatusIds, editableFieldNames);
         var intents = _mapper.Map(elements, "Part", new Dictionary<string, string?>());
+
+        // Resolve tracking-status display names → IDs (Revit stores names, API needs GUIDs)
+        intents = ResolveTrackingStatusNames(intents, statusNameToId);
 
         // Resolve any QR-code based IDs before validation/push
         intents = await ResolveQrCodeIdsAsync(intents, ct);
 
+        var validator = new ChangeValidator(validStatusIds, editableFieldNames);
         var validated = validator.ValidateAll(intents);
 
         var succeeded = new List<ChangeResult>();
@@ -97,6 +109,43 @@ public class SyncEngine : ISyncEngine
             ChangesFailed: failed.Count,
             Results: succeeded.Concat(failed).ToList().AsReadOnly()
         );
+    }
+
+    // ──────────────── Tracking-status name → ID ────────────────
+
+    /// <summary>
+    /// Revit stores tracking-status display names (e.g. "BIM/VDC Released to Prefab")
+    /// but the Stratus API expects the tracking-status GUID. Resolve names to IDs here.
+    /// </summary>
+    private IReadOnlyList<ChangeIntent> ResolveTrackingStatusNames(
+        IReadOnlyList<ChangeIntent> intents,
+        Dictionary<string, string> statusNameToId)
+    {
+        var resolved = new List<ChangeIntent>(intents.Count);
+        foreach (var intent in intents)
+        {
+            if (intent.TrackingStatusChange is not null)
+            {
+                var name = intent.TrackingStatusChange.NewValue;
+                if (statusNameToId.TryGetValue(name, out var id))
+                {
+                    var fixedChange = new FieldChange(
+                        intent.TrackingStatusChange.FieldName,
+                        intent.TrackingStatusChange.OldValue,
+                        id, // use the GUID instead of the display name
+                        intent.TrackingStatusChange.IsCompanyField,
+                        intent.TrackingStatusChange.CompanyFieldId);
+                    resolved.Add(intent with { TrackingStatusChange = fixedChange });
+                    continue;
+                }
+                // If it already looks like a GUID, pass through
+                _logger.LogWarning(
+                    "Tracking status '{Name}' not found in company statuses for element {ElementId}. " +
+                    "Passing as-is (may be a GUID).", name, intent.RevitElementId);
+            }
+            resolved.Add(intent);
+        }
+        return resolved.AsReadOnly();
     }
 
     // ──────────────── QR-code resolution ────────────────

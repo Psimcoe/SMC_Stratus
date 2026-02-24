@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.DB;
@@ -42,10 +43,28 @@ public class PushUpdatesCommand : IExternalCommand
             var selected = revitContext.GetSelectedElements();
             var report = engine.PushUpdatesAsync(selected).GetAwaiter().GetResult();
 
+            var details = "";
+            if (report.ChangesFailed > 0)
+            {
+                details = "\n\nFailed changes:\n";
+                foreach (var r in report.Results.Where(r => !r.IsSuccess))
+                {
+                    details += $"  [{r.FieldName}] {r.OldValue} -> {r.NewValue}: {r.ErrorMessage}\n";
+                }
+            }
+            if (report.ChangesSucceeded > 0)
+            {
+                details += "\n\nSucceeded:\n";
+                foreach (var r in report.Results.Where(r => r.IsSuccess))
+                {
+                    details += $"  [{r.FieldName}] -> {r.NewValue}\n";
+                }
+            }
+
             TaskDialog.Show("Stratus – Push Results",
                 $"Elements: {report.TotalElements}\n" +
                 $"Succeeded: {report.ChangesSucceeded}\n" +
-                $"Failed: {report.ChangesFailed}");
+                $"Failed: {report.ChangesFailed}" + details);
 
             return Result.Succeeded;
         }
