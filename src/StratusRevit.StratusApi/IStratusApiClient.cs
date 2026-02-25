@@ -13,8 +13,8 @@ public interface IStratusApiClient
     /// <summary>GET /v1/part/{qrCode}  – look up a part by its QR-code value.</summary>
     Task<PartDto?> GetPartByQrCodeAsync(string qrCode, CancellationToken ct = default);
 
-    /// <summary>GET /v1/part?pageOffset=…&amp;pageLimit=…</summary>
-    Task<PagedResponse<PartDto>> GetPartsAsync(int pageOffset = 0, int pageLimit = 50, CancellationToken ct = default);
+    /// <summary>GET /v1/part?page=…&amp;pagesize=…</summary>
+    Task<PagedResponse<PartDto>> GetPartsAsync(int page = 0, int pageSize = 50, CancellationToken ct = default);
 
     // ── Part – Tracking Status ───────────────────────────────
     /// <summary>POST /v1/part/{id}/tracking-status</summary>
@@ -33,5 +33,5 @@ public interface IStratusApiClient
     Task UpdatePartFieldAsync(string partId, string fieldId, string? value, CancellationToken ct = default);
 
     /// <summary>PATCH /v2/part/{id}/fields  – multiple company fields.</summary>
-    Task UpdatePartFieldsAsync(string partId, FieldsUpdateRequest fields, CancellationToken ct = default);
+    Task UpdatePartFieldsAsync(string partId, IReadOnlyList<FieldValuePair> fields, CancellationToken ct = default);
 }

@@ -1,3 +1,4 @@
+using System;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.Attributes;
@@ -9,7 +10,9 @@ public class StratusRevitApp : IExternalApplication
 {
     public Result OnStartup(UIControlledApplication application)
     {
-        // TODO: Add ribbon panel / buttons if desired
+        // No assembly-resolve handler needed: all HTTP work is done out-of-process
+        // by StratusRevit.PushAgent.exe (net8.0). The Revit addin only reads
+        // element data and serialises JSON.
         return Result.Succeeded;
     }
 

@@ -37,16 +37,16 @@ public class StratusApiClient : IStratusApiClient
             var request = requestFactory();
             try
             {
-                var response = await _http.SendAsync(request, ct);
+                var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
-                var result = await response.Content.ReadFromJsonAsync<T>(cancellationToken: ct);
+                var result = await response.Content.ReadFromJsonAsync<T>(cancellationToken: ct).ConfigureAwait(false);
                 return result!;
             }
             catch (HttpRequestException ex) when (attempt < _config.MaxRetries)
             {
                 last = ex;
                 _logger.LogWarning("Attempt {Attempt} failed: {Message}. Retrying...", attempt + 1, ex.Message);
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
+                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct).ConfigureAwait(false);
             }
         }
         throw last!;
@@ -60,7 +60,7 @@ public class StratusApiClient : IStratusApiClient
             var request = requestFactory();
             try
             {
-                var response = await _http.SendAsync(request, ct);
+                var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 return;
             }
@@ -68,7 +68,7 @@ public class StratusApiClient : IStratusApiClient
             {
                 last = ex;
                 _logger.LogWarning("Attempt {Attempt} failed: {Message}. Retrying...", attempt + 1, ex.Message);
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
+                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct).ConfigureAwait(false);
             }
         }
         throw last!;
@@ -79,7 +79,7 @@ public class StratusApiClient : IStratusApiClient
     public async Task<IReadOnlyList<TrackingStatusDto>> GetTrackingStatusesAsync(CancellationToken ct = default)
     {
         var result = await SendWithRetryAsync<List<TrackingStatusDto>>(
-            () => BuildRequest(HttpMethod.Get, "company/trackingstatuses"),
+            () => BuildRequest(HttpMethod.Get, "company/tracking-statuses"),
             ct);
         return result?.AsReadOnly() ?? (IReadOnlyList<TrackingStatusDto>)Array.Empty<TrackingStatusDto>();
     }
@@ -137,10 +137,10 @@ public class StratusApiClient : IStratusApiClient
 #endif
     }
 
-    public async Task<PagedResponse<PartDto>> GetPartsAsync(int pageOffset = 0, int pageLimit = 50, CancellationToken ct = default)
+    public async Task<PagedResponse<PartDto>> GetPartsAsync(int page = 0, int pageSize = 50, CancellationToken ct = default)
     {
         return await SendWithRetryAsync<PagedResponse<PartDto>>(
-            () => BuildRequest(HttpMethod.Get, $"v1/part?pageOffset={pageOffset}&pageLimit={pageLimit}"),
+            () => BuildRequest(HttpMethod.Get, $"v1/part?page={page}&pagesize={pageSize}"),
             ct);
     }
 
@@ -180,11 +180,11 @@ public class StratusApiClient : IStratusApiClient
     {
         await SendWithRetryAsync(
             () => BuildRequest(new HttpMethod("PATCH"), $"v2/part/{partId}/field",
-                JsonContent.Create(new FieldUpdateRequest { FieldId = fieldId, Value = value })),
+                JsonContent.Create(new FieldValuePair { Key = fieldId, Value = value })),
             ct);
     }
 
-    public async Task UpdatePartFieldsAsync(string partId, FieldsUpdateRequest fields, CancellationToken ct = default)
+    public async Task UpdatePartFieldsAsync(string partId, IReadOnlyList<FieldValuePair> fields, CancellationToken ct = default)
     {
         await SendWithRetryAsync(
             () => BuildRequest(new HttpMethod("PATCH"), $"v2/part/{partId}/fields",

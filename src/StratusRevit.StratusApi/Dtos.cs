@@ -133,6 +133,9 @@ public class PartDto
     [JsonPropertyName("cutLengthAdjustment")]
     public double? CutLengthAdjustment { get; set; }
 
+    [JsonPropertyName("cutLength2Adjustment")]
+    public double? CutLength2Adjustment { get; set; }
+
     [JsonPropertyName("lockLength")]
     public bool? LockLength { get; set; }
 
@@ -162,6 +165,33 @@ public class PartDto
 
 /// <summary>A 3-D point attached to a Part.</summary>
 public class PartPointDto
+{
+    [JsonPropertyName("pointType")]
+    public string? PointType { get; set; }
+
+    [JsonPropertyName("cadId")]
+    public string? CadId { get; set; }
+
+    [JsonPropertyName("location")]
+    public Point3DDto? Location { get; set; }
+
+    [JsonPropertyName("direction")]
+    public Point3DDto? Direction { get; set; }
+
+    [JsonPropertyName("upVector")]
+    public Point3DDto? UpVector { get; set; }
+
+    [JsonPropertyName("width")]
+    public double? Width { get; set; }
+
+    [JsonPropertyName("height")]
+    public double? Height { get; set; }
+
+    [JsonPropertyName("matingElementUniqueId")]
+    public string? MatingElementUniqueId { get; set; }
+}
+
+public class Point3DDto
 {
     [JsonPropertyName("x")]
     public double X { get; set; }
@@ -215,6 +245,9 @@ public class TrackingStatusUpdateResponse
     [JsonPropertyName("costTypeId")]
     public string? CostTypeId { get; set; }
 
+    [JsonPropertyName("createdDT")]
+    public DateTimeOffset? CreatedDT { get; set; }
+
     [JsonPropertyName("trackingLogEntryIdResult")]
     public string? TrackingLogEntryIdResult { get; set; }
 }
@@ -251,28 +284,9 @@ public class BulkPropertyUpdate
 
 // ====================================================================
 // Part – Company field update (PATCH /v2/part/{id}/field)
+// Uses FieldValuePair (same {"key":"...","value":"..."} shape)
+// PATCH /v2/part/{id}/fields uses an array of FieldValuePair
 // ====================================================================
-
-/// <summary>
-/// Request body for PATCH /v2/part/{id}/field (single field).
-/// </summary>
-public class FieldUpdateRequest
-{
-    [JsonPropertyName("fieldId")]
-    public string FieldId { get; set; } = "";
-
-    [JsonPropertyName("value")]
-    public string? Value { get; set; }
-}
-
-/// <summary>
-/// Request body for PATCH /v2/part/{id}/fields (multiple fields).
-/// </summary>
-public class FieldsUpdateRequest
-{
-    [JsonPropertyName("fields")]
-    public List<FieldUpdateRequest> Fields { get; set; } = new();
-}
 
 // ====================================================================
 // Paging wrapper

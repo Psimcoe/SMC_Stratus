@@ -7,15 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\StratusRevit.SyncEngine\StratusRevit.SyncEngine.csproj" />
+    <!-- Domain only – no SyncEngine/StratusApi/HTTP in the Revit process -->
+    <ProjectReference Include="..\StratusRevit.Domain\StratusRevit.Domain.csproj" />
     <ProjectReference Include="..\StratusRevit.RevitAdapter.Abstractions\StratusRevit.RevitAdapter.Abstractions.csproj" />
     <ProjectReference Include="..\StratusRevit.RevitAdapter.Revit2023\StratusRevit.RevitAdapter.Revit2023.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -44,8 +44,8 @@ public class SyncEngine : ISyncEngine
     {
         _logger.LogInformation("PushUpdates starting for {Count} elements", elements.Count);
 
-        var statuses = await _apiClient.GetTrackingStatusesAsync(ct);
-        var fields = await _apiClient.GetCompanyFieldsAsync(ct);
+        var statuses = await _apiClient.GetTrackingStatusesAsync(ct).ConfigureAwait(false);
+        var fields = await _apiClient.GetCompanyFieldsAsync(ct).ConfigureAwait(false);
 
         // Build a name→ID lookup so Revit display names can be resolved to GUIDs
         var statusNameToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -165,7 +165,7 @@ public class SyncEngine : ISyncEngine
                 var qrCode = intent.StratusObjectId.Substring(3);
                 try
                 {
-                    var part = await _apiClient.GetPartByQrCodeAsync(qrCode, ct);
+                    var part = await _apiClient.GetPartByQrCodeAsync(qrCode, ct).ConfigureAwait(false);
                     if (part is not null)
                     {
                         resolved.Add(intent with { StratusObjectId = part.Id });
@@ -190,7 +190,7 @@ public class SyncEngine : ISyncEngine
         try
         {
             var req = new TrackingStatusUpdateRequest { TrackingStatusId = intent.TrackingStatusChange!.NewValue };
-            await _apiClient.UpdatePartTrackingStatusAsync(intent.StratusObjectId, req, ct: ct);
+            await _apiClient.UpdatePartTrackingStatusAsync(intent.StratusObjectId, req, ct: ct).ConfigureAwait(false);
             return new ChangeResult(intent.StratusObjectId, intent.RevitElementId,
                 intent.TrackingStatusChange.FieldName,
                 intent.TrackingStatusChange.OldValue, intent.TrackingStatusChange.NewValue,
@@ -212,12 +212,12 @@ public class SyncEngine : ISyncEngine
             if (fieldChange.IsCompanyField && fieldChange.CompanyFieldId is not null)
             {
                 // Company-level field → PATCH /v2/part/{id}/field
-                await _apiClient.UpdatePartFieldAsync(intent.StratusObjectId, fieldChange.CompanyFieldId, fieldChange.NewValue, ct);
+                await _apiClient.UpdatePartFieldAsync(intent.StratusObjectId, fieldChange.CompanyFieldId, fieldChange.NewValue, ct).ConfigureAwait(false);
             }
             else
             {
                 // User-defined property → PATCH /v1/part/{id}/property
-                await _apiClient.UpdatePartPropertyAsync(intent.StratusObjectId, fieldChange.FieldName, fieldChange.NewValue, ct);
+                await _apiClient.UpdatePartPropertyAsync(intent.StratusObjectId, fieldChange.FieldName, fieldChange.NewValue, ct).ConfigureAwait(false);
             }
 
             return new ChangeResult(intent.StratusObjectId, intent.RevitElementId,

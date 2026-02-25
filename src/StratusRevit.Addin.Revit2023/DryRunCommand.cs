@@ -1,69 +1,87 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.Attributes;
-using Microsoft.Extensions.DependencyInjection;
+using StratusRevit.Domain;
 using StratusRevit.RevitAdapter.Revit2023;
-using StratusRevit.SyncEngine;
 
 namespace StratusRevit.Addin.Revit2023;
 
 [Transaction(TransactionMode.Manual)]
 public class DryRunCommand : IExternalCommand
 {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
     {
         try
         {
             var addinDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
-            var configPath = Path.Combine(addinDir, "stratus-addin.json");
-            var config = StratusAddinConfig.LoadFromFile(configPath);
+            var config = StratusAddinConfig.LoadFromFile(Path.Combine(addinDir, "stratus-addin.json"));
 
             var mappingPath = Path.Combine(addinDir, config.MappingConfigPath);
-            var jsonOpts = new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-            };
             var mappingConfig = File.Exists(mappingPath)
-                ? System.Text.Json.JsonSerializer.Deserialize<Domain.MappingConfig>(File.ReadAllText(mappingPath), jsonOpts)
-                  ?? new Domain.MappingConfig()
-                : new Domain.MappingConfig();
+                ? JsonSerializer.Deserialize<MappingConfig>(File.ReadAllText(mappingPath), JsonOpts)
+                  ?? new MappingConfig()
+                : new MappingConfig();
 
-            // Create and initialise the Revit 2023 context with the live UIApplication
+            // ── Extract element data from Revit (pure Revit API, no HTTP) ──
             var revitContext = new Revit2023Context();
             revitContext.Initialise(commandData.Application);
-
-            var services = DependencyContainer.Build(config, mappingConfig, revitContext);
-            var engine = services.GetRequiredService<ISyncEngine>();
-
             var selected = revitContext.GetSelectedElements();
-            var report = engine.DryRunAsync(selected).GetAwaiter().GetResult();
 
-            // Diagnostic: show parameter names/values for first selected element
+            // ── Build payload for the out-of-process agent ──
+            var payload = new AgentPayload
+            {
+                Mode = AgentMode.DryRun,
+                ApiConfig = new AgentApiConfig
+                {
+                    BaseUrl = config.BaseUrl,
+                    ApiKey = config.ApiKey,
+                    TimeoutSeconds = config.TimeoutSeconds,
+                    MaxRetries = config.MaxRetries
+                },
+                MappingConfig = mappingConfig,
+                Elements = selected.Select(e => new AgentElement
+                {
+                    ElementId = e.ElementId,
+                    UniqueId = e.UniqueId,
+                    ElementType = e.ElementType,
+                    Name = e.Name,
+                    Parameters = e.Parameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                }).ToList()
+            };
+
+            // ── Launch PushAgent.exe (net8.0) in its own process ──
+            var agentResult = AgentLauncher.Run(addinDir, payload, JsonOpts);
+
+            // ── Diagnostic info for the first selected element ──
             var diagMsg = "";
             if (selected.Count > 0)
             {
                 var elem = selected[0];
-                diagMsg = $"\n\n--- DEBUG: Element '{elem.Name}' ---\n" +
-                          $"Category: {elem.ElementType}\n" +
-                          $"UniqueId: {elem.UniqueId}\n" +
-                          $"Parameters ({elem.Parameters.Count}):\n";
+                diagMsg = $"\n\n--- DEBUG: Element '{elem.Name}' ---\n";
                 foreach (var kvp in elem.Parameters)
                 {
                     if (kvp.Key.IndexOf("STRATUS", StringComparison.OrdinalIgnoreCase) >= 0
-                        || kvp.Key.IndexOf("stratus", StringComparison.OrdinalIgnoreCase) >= 0
                         || kvp.Key.IndexOf("Comment", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         diagMsg += $"  [{kvp.Key}] = [{kvp.Value}]\n";
                     }
                 }
-
-                // Show mapping config rules for comparison
                 diagMsg += $"\nMapping rules loaded: {mappingConfig.FieldMappings.Count}\n";
-                diagMsg += $"Conflict policy: {mappingConfig.ConflictPolicy}\n";
                 diagMsg += $"Stratus ID param: {mappingConfig.StratusIdParameter ?? "(none, using UniqueId)"}\n";
                 diagMsg += $"QR code param: {mappingConfig.StratusQrCodeParameter ?? "(none)"}\n\n";
                 foreach (var rule in mappingConfig.FieldMappings)
@@ -71,14 +89,13 @@ public class DryRunCommand : IExternalCommand
                     var found = elem.Parameters.TryGetValue(rule.RevitParameter, out var val);
                     diagMsg += $"  '{rule.RevitParameter}' -> {(found ? $"FOUND = [{val}]" : "NOT FOUND")}";
                     if (rule.IsTrackingStatus) diagMsg += " [tracking-status]";
-                    if (rule.IsCompanyField) diagMsg += $" [company-field:{rule.CompanyFieldId}]";
                     diagMsg += "\n";
                 }
             }
 
             TaskDialog.Show("Stratus – Dry Run",
-                $"Elements: {report.TotalElements}\n" +
-                $"Changes planned: {report.ChangesPlanned}\n\n" +
+                $"Elements: {agentResult.TotalElements}\n" +
+                $"Changes planned: {agentResult.ChangesPlanned}\n\n" +
                 "No data was sent to Stratus." + diagMsg);
 
             return Result.Succeeded;

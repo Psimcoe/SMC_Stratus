@@ -8,6 +8,7 @@
     <Project Path="src/StratusRevit.RevitAdapter.Revit2025/StratusRevit.RevitAdapter.Revit2025.csproj" />
     <Project Path="src/StratusRevit.StratusApi/StratusRevit.StratusApi.csproj" />
     <Project Path="src/StratusRevit.SyncEngine/StratusRevit.SyncEngine.csproj" />
+    <Project Path="src/StratusRevit.PushAgent/StratusRevit.PushAgent.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/StratusRevit.Tests/StratusRevit.Tests.csproj" />

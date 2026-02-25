@@ -1,70 +1,94 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.Attributes;
-using Microsoft.Extensions.DependencyInjection;
+using StratusRevit.Domain;
 using StratusRevit.RevitAdapter.Revit2023;
-using StratusRevit.SyncEngine;
 
 namespace StratusRevit.Addin.Revit2023;
 
 [Transaction(TransactionMode.Manual)]
 public class PushUpdatesCommand : IExternalCommand
 {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
     {
         try
         {
             var addinDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
-            var configPath = Path.Combine(addinDir, "stratus-addin.json");
-            var config = StratusAddinConfig.LoadFromFile(configPath);
+            var config = StratusAddinConfig.LoadFromFile(Path.Combine(addinDir, "stratus-addin.json"));
 
             var mappingPath = Path.Combine(addinDir, config.MappingConfigPath);
-            var jsonOpts = new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-            };
             var mappingConfig = File.Exists(mappingPath)
-                ? System.Text.Json.JsonSerializer.Deserialize<Domain.MappingConfig>(File.ReadAllText(mappingPath), jsonOpts)
-                  ?? new Domain.MappingConfig()
-                : new Domain.MappingConfig();
+                ? JsonSerializer.Deserialize<MappingConfig>(File.ReadAllText(mappingPath), JsonOpts)
+                  ?? new MappingConfig()
+                : new MappingConfig();
 
-            // Create and initialise the Revit 2023 context with the live UIApplication
+            // ── Extract element data from Revit (pure Revit API, no HTTP) ──
             var revitContext = new Revit2023Context();
             revitContext.Initialise(commandData.Application);
-
-            var services = DependencyContainer.Build(config, mappingConfig, revitContext);
-            var engine = services.GetRequiredService<ISyncEngine>();
-
             var selected = revitContext.GetSelectedElements();
-            var report = engine.PushUpdatesAsync(selected).GetAwaiter().GetResult();
 
+            // ── Build payload for the out-of-process agent ──
+            var payload = new AgentPayload
+            {
+                Mode = AgentMode.Push,
+                ApiConfig = new AgentApiConfig
+                {
+                    BaseUrl = config.BaseUrl,
+                    ApiKey = config.ApiKey,
+                    TimeoutSeconds = config.TimeoutSeconds,
+                    MaxRetries = config.MaxRetries
+                },
+                MappingConfig = mappingConfig,
+                Elements = selected.Select(e => new AgentElement
+                {
+                    ElementId = e.ElementId,
+                    UniqueId = e.UniqueId,
+                    ElementType = e.ElementType,
+                    Name = e.Name,
+                    Parameters = e.Parameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                }).ToList()
+            };
+
+            // ── Launch PushAgent.exe (net8.0) in its own process ──
+            var agentResult = AgentLauncher.Run(addinDir, payload, JsonOpts);
+
+            // ── Display results ──
             var details = "";
-            if (report.ChangesFailed > 0)
+            if (agentResult.ChangesFailed > 0)
             {
                 details = "\n\nFailed changes:\n";
-                foreach (var r in report.Results.Where(r => !r.IsSuccess))
-                {
+                foreach (var r in agentResult.Results.Where(r => !r.IsSuccess))
                     details += $"  [{r.FieldName}] {r.OldValue} -> {r.NewValue}: {r.ErrorMessage}\n";
-                }
             }
-            if (report.ChangesSucceeded > 0)
+            if (agentResult.ChangesSucceeded > 0)
             {
                 details += "\n\nSucceeded:\n";
-                foreach (var r in report.Results.Where(r => r.IsSuccess))
-                {
+                foreach (var r in agentResult.Results.Where(r => r.IsSuccess))
                     details += $"  [{r.FieldName}] -> {r.NewValue}\n";
-                }
+            }
+            if (!string.IsNullOrEmpty(agentResult.Error))
+            {
+                details += $"\n\nAgent error: {agentResult.Error}";
             }
 
             TaskDialog.Show("Stratus – Push Results",
-                $"Elements: {report.TotalElements}\n" +
-                $"Succeeded: {report.ChangesSucceeded}\n" +
-                $"Failed: {report.ChangesFailed}" + details);
+                $"Elements: {agentResult.TotalElements}\n" +
+                $"Succeeded: {agentResult.ChangesSucceeded}\n" +
+                $"Failed: {agentResult.ChangesFailed}" + details);
 
             return Result.Succeeded;
         }
