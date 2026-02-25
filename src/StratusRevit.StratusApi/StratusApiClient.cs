@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 
 namespace StratusRevit.StratusApi;
@@ -9,6 +10,12 @@ public class StratusApiClient : IStratusApiClient
     private readonly HttpClient _http;
     private readonly StratusApiConfig _config;
     private readonly ILogger<StratusApiClient> _logger;
+
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
 
     public StratusApiClient(HttpClient http, StratusApiConfig config, ILogger<StratusApiClient> logger)
     {
@@ -24,7 +31,7 @@ public class StratusApiClient : IStratusApiClient
         var req = new HttpRequestMessage(method, relativeUrl);
         if (content is not null)
             req.Content = content;
-        req.Headers.Add("x-api-key", _config.ApiKey);
+        req.Headers.Add("app-key", _config.ApiKey);
         req.Headers.Add("X-Correlation-Id", Guid.NewGuid().ToString());
         return req;
     }
@@ -38,7 +45,17 @@ public class StratusApiClient : IStratusApiClient
             try
             {
                 var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
+                if (!response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync(
+#if NET5_0_OR_GREATER
+                        ct
+#endif
+                    ).ConfigureAwait(false);
+                    _logger.LogError("HTTP {Status} from {Method} {Url}: {Body}",
+                        (int)response.StatusCode, request.Method, request.RequestUri, body);
+                    response.EnsureSuccessStatusCode(); // throws with standard message
+                }
                 var result = await response.Content.ReadFromJsonAsync<T>(cancellationToken: ct).ConfigureAwait(false);
                 return result!;
             }
@@ -120,9 +137,27 @@ public class StratusApiClient : IStratusApiClient
     {
         try
         {
-            return await SendWithRetryAsync<PartDto>(
-                () => BuildRequest(HttpMethod.Get, $"v1/part/{Uri.EscapeDataString(qrCode)}"),
-                ct);
+            // Use lightweight JSON parsing to avoid deserialization issues with the full PartDto.
+            // We only need the "id" field for QR-code resolution, and the full PartDto has complex
+            // nested structures that may not match our DTO exactly.
+            var request = BuildRequest(HttpMethod.Get, $"v1/part/{Uri.EscapeDataString(qrCode)}");
+            var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            var stream = await response.Content.ReadAsStreamAsync(
+#if NET5_0_OR_GREATER
+                ct
+#endif
+            ).ConfigureAwait(false);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
+            var root = doc.RootElement;
+            var part = new PartDto
+            {
+                Id = root.GetProperty("id").GetString() ?? "",
+                Description = root.TryGetProperty("description", out var desc) ? desc.GetString() : null,
+                CurrentTrackingStatusId = root.TryGetProperty("currentTrackingStatusId", out var ts) ? ts.GetString() : null,
+                QrCodeUrl = root.TryGetProperty("qrCodeUrl", out var qr) ? qr.GetString() : null,
+            };
+            return part;
         }
 #if NET5_0_OR_GREATER
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -152,7 +187,7 @@ public class StratusApiClient : IStratusApiClient
         var query = isCut ? "" : "?isCut=false";
         return await SendWithRetryAsync<TrackingStatusUpdateResponse>(
             () => BuildRequest(HttpMethod.Post, $"v1/part/{partId}/tracking-status{query}",
-                JsonContent.Create(request)),
+                JsonContent.Create(request, options: _jsonOptions)),
             ct);
     }
 
@@ -162,7 +197,7 @@ public class StratusApiClient : IStratusApiClient
     {
         return await SendWithRetryAsync<FieldValuePair>(
             () => BuildRequest(new HttpMethod("PATCH"), $"v1/part/{partId}/property",
-                JsonContent.Create(new FieldValuePair { Key = key, Value = value })),
+                JsonContent.Create(new FieldValuePair { Key = key, Value = value }, options: _jsonOptions)),
             ct);
     }
 
@@ -170,7 +205,7 @@ public class StratusApiClient : IStratusApiClient
     {
         await SendWithRetryAsync(
             () => BuildRequest(new HttpMethod("PATCH"), "v1/part/properties",
-                JsonContent.Create(updates)),
+                JsonContent.Create(updates, options: _jsonOptions)),
             ct);
     }
 
@@ -180,7 +215,7 @@ public class StratusApiClient : IStratusApiClient
     {
         await SendWithRetryAsync(
             () => BuildRequest(new HttpMethod("PATCH"), $"v2/part/{partId}/field",
-                JsonContent.Create(new FieldValuePair { Key = fieldId, Value = value })),
+                JsonContent.Create(new FieldValuePair { Key = fieldId, Value = value }, options: _jsonOptions)),
             ct);
     }
 
@@ -188,7 +223,7 @@ public class StratusApiClient : IStratusApiClient
     {
         await SendWithRetryAsync(
             () => BuildRequest(new HttpMethod("PATCH"), $"v2/part/{partId}/fields",
-                JsonContent.Create(fields)),
+                JsonContent.Create(fields, options: _jsonOptions)),
             ct);
     }
 }

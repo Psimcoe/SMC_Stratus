@@ -1,7 +1,7 @@
 # Stratus API Contract
 
 Base URL: `https://api.gtpstratus.com`
-Auth: `x-api-key` header (from Admin > Company > App Keys)
+Auth: `app-key` header (from Admin > Company > App Keys)
 
 ## Implemented Endpoints
 

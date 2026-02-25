@@ -57,47 +57,66 @@ public class SyncEngine : ISyncEngine
                 statusNameToId[s.Name] = s.Id;
         }
 
-        var editableFieldNames = new HashSet<string>(fields.Where(f => f.IsEditable).Select(f => f.Name));
+        var editableFieldNames = new HashSet<string>(fields.Where(f => f.IsEditable).Select(f => f.Name), StringComparer.OrdinalIgnoreCase);
+        var fieldNameToId = fields.Where(f => f.IsEditable && !string.IsNullOrEmpty(f.Name))
+            .ToDictionary(f => f.Name!, f => f.Id, StringComparer.OrdinalIgnoreCase);
 
         var intents = _mapper.Map(elements, "Part", new Dictionary<string, string?>());
 
         // Resolve tracking-status display names → IDs (Revit stores names, API needs GUIDs)
         intents = ResolveTrackingStatusNames(intents, statusNameToId);
 
+        // Auto-resolve company field names → IDs (so mappings don't need to hardcode GUIDs)
+        intents = ResolveCompanyFieldIds(intents, fieldNameToId);
+
         // Resolve any QR-code based IDs before validation/push
         intents = await ResolveQrCodeIdsAsync(intents, ct);
 
         var validator = new ChangeValidator(validStatusIds, editableFieldNames);
-        var validated = validator.ValidateAll(intents);
 
         var succeeded = new List<ChangeResult>();
         var failed = new List<ChangeResult>();
 
-        foreach (var intent in validated.Where(i => i.IsValid))
+        foreach (var intent in intents)
         {
+            // Validate and apply tracking status independently
             if (intent.TrackingStatusChange is not null)
             {
-                var result = await ApplyTrackingStatusAsync(intent, ct);
-                _audit.LogAttempt(result);
-                if (result.IsSuccess) succeeded.Add(result); else failed.Add(result);
+                if (!validStatusIds.Contains(intent.TrackingStatusChange.NewValue))
+                {
+                    failed.Add(new ChangeResult(
+                        intent.StratusObjectId, intent.RevitElementId,
+                        intent.TrackingStatusChange.FieldName,
+                        intent.TrackingStatusChange.OldValue, intent.TrackingStatusChange.NewValue,
+                        false, $"Tracking status '{intent.TrackingStatusChange.NewValue}' is not a valid tracking status ID.",
+                        DateTimeOffset.UtcNow));
+                }
+                else
+                {
+                    var result = await ApplyTrackingStatusAsync(intent, ct);
+                    _audit.LogAttempt(result);
+                    if (result.IsSuccess) succeeded.Add(result); else failed.Add(result);
+                }
             }
 
+            // Validate and apply each field change independently
             foreach (var fieldChange in intent.CustomFieldChanges)
             {
-                var result = await ApplyFieldChangeAsync(intent, fieldChange, ct);
-                _audit.LogAttempt(result);
-                if (result.IsSuccess) succeeded.Add(result); else failed.Add(result);
+                if (!editableFieldNames.Contains(fieldChange.FieldName))
+                {
+                    failed.Add(new ChangeResult(
+                        intent.StratusObjectId, intent.RevitElementId,
+                        fieldChange.FieldName, fieldChange.OldValue, fieldChange.NewValue,
+                        false, $"Field '{fieldChange.FieldName}' is not an editable company field. It may be a part property — update the mapping if needed.",
+                        DateTimeOffset.UtcNow));
+                }
+                else
+                {
+                    var result = await ApplyFieldChangeAsync(intent, fieldChange, ct);
+                    _audit.LogAttempt(result);
+                    if (result.IsSuccess) succeeded.Add(result); else failed.Add(result);
+                }
             }
-        }
-
-        foreach (var intent in validated.Where(i => !i.IsValid))
-        {
-            var errorResult = new ChangeResult(
-                intent.StratusObjectId, intent.RevitElementId,
-                "validation", null, null, false,
-                string.Join("; ", intent.ValidationErrors),
-                DateTimeOffset.UtcNow);
-            failed.Add(errorResult);
         }
 
         return new SyncReport(
@@ -117,6 +136,37 @@ public class SyncEngine : ISyncEngine
     /// Revit stores tracking-status display names (e.g. "BIM/VDC Released to Prefab")
     /// but the Stratus API expects the tracking-status GUID. Resolve names to IDs here.
     /// </summary>
+    /// <summary>
+    /// For any field change whose FieldName matches an editable company field,
+    /// auto-set IsCompanyField = true and CompanyFieldId = the field's GUID.
+    /// This means the mapping.json doesn't need to hardcode field GUIDs.
+    /// </summary>
+    private IReadOnlyList<ChangeIntent> ResolveCompanyFieldIds(
+        IReadOnlyList<ChangeIntent> intents,
+        Dictionary<string, string> fieldNameToId)
+    {
+        var resolved = new List<ChangeIntent>(intents.Count);
+        foreach (var intent in intents)
+        {
+            var fixedFields = new List<FieldChange>(intent.CustomFieldChanges.Count);
+            bool anyChanged = false;
+            foreach (var fc in intent.CustomFieldChanges)
+            {
+                if (!fc.IsCompanyField && fieldNameToId.TryGetValue(fc.FieldName, out var fieldId))
+                {
+                    fixedFields.Add(new FieldChange(fc.FieldName, fc.OldValue, fc.NewValue, true, fieldId));
+                    anyChanged = true;
+                }
+                else
+                {
+                    fixedFields.Add(fc);
+                }
+            }
+            resolved.Add(anyChanged ? intent with { CustomFieldChanges = fixedFields.AsReadOnly() } : intent);
+        }
+        return resolved.AsReadOnly();
+    }
+
     private IReadOnlyList<ChangeIntent> ResolveTrackingStatusNames(
         IReadOnlyList<ChangeIntent> intents,
         Dictionary<string, string> statusNameToId)

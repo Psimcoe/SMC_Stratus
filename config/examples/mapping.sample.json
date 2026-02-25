@@ -12,7 +12,7 @@
     },
     {
       "revitParameter": "Stratus Comments",
-      "stratusField": "Stratus_Comments",
+      "stratusField": "Revit_Comments",
       "isTrackingStatus": false,
       "normalization": { "trim": true },
       "allowOverwriteNonEmpty": true

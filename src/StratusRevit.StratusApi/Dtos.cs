@@ -47,14 +47,41 @@ public class FieldDto
     [JsonPropertyName("isEditable")]
     public bool IsEditable { get; set; }
 
+    [JsonPropertyName("isExpression")]
+    public bool IsExpression { get; set; }
+
+    [JsonPropertyName("isTotal")]
+    public bool IsTotal { get; set; }
+
     [JsonPropertyName("possibleValues")]
-    public List<string>? PossibleValues { get; set; }
+    public string? PossibleValues { get; set; }
 
     [JsonPropertyName("dataType")]
-    public string? DataType { get; set; }
+    public int? DataType { get; set; }
 
     [JsonPropertyName("dataTypeName")]
     public string? DataTypeName { get; set; }
+
+    [JsonPropertyName("defaultValue")]
+    public string? DefaultValue { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("expression")]
+    public string? Expression { get; set; }
+
+    [JsonPropertyName("filterId")]
+    public string? FilterId { get; set; }
+
+    [JsonPropertyName("unit")]
+    public string? Unit { get; set; }
+
+    [JsonPropertyName("createdDT")]
+    public DateTimeOffset? CreatedDT { get; set; }
+
+    [JsonPropertyName("modifiedDT")]
+    public DateTimeOffset? ModifiedDT { get; set; }
 }
 
 // ====================================================================
