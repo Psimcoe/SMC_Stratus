@@ -462,13 +462,13 @@ public class FakeStratusHandler : HttpMessageHandler
     {
         var h = new FakeStratusHandler();
 
-        h.AddRoute("tracking-statuses", HttpStatusCode.OK, JsonSerializer.Serialize(new[]
+        h.AddRoute("v1/company/tracking-statuses", HttpStatusCode.OK, JsonSerializer.Serialize(new[]
         {
             new { id = "ts-fabricating", name = "Fabricating", trackingStatusGroupId = "g-1", trackingStatusGroupName = "Production" },
             new { id = "ts-shipped", name = "Shipped", trackingStatusGroupId = "g-2", trackingStatusGroupName = "Logistics" }
         }));
 
-        h.AddRoute("company/fields", HttpStatusCode.OK, JsonSerializer.Serialize(new[]
+        h.AddRoute("v1/company/fields", HttpStatusCode.OK, JsonSerializer.Serialize(new[]
         {
             new { id = "f-1", name = "Comments", displayName = "Comments", isEditable = true },
             new { id = "f-2", name = "Location", displayName = "Location", isEditable = true }
@@ -516,7 +516,7 @@ public class FakeStratusHandler : HttpMessageHandler
     {
         var h = WithDefaults();
         var statuses = statusIds.Select(id => new { id, name = id, trackingStatusGroupId = "g-1", trackingStatusGroupName = "Default" });
-        h.AddRoute("tracking-statuses", HttpStatusCode.OK, JsonSerializer.Serialize(statuses));
+        h.AddRoute("v1/company/tracking-statuses", HttpStatusCode.OK, JsonSerializer.Serialize(statuses));
         return h;
     }
 

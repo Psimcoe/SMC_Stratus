@@ -79,7 +79,7 @@ public class StratusApiClient : IStratusApiClient
     public async Task<IReadOnlyList<TrackingStatusDto>> GetTrackingStatusesAsync(CancellationToken ct = default)
     {
         var result = await SendWithRetryAsync<List<TrackingStatusDto>>(
-            () => BuildRequest(HttpMethod.Get, "company/tracking-statuses"),
+            () => BuildRequest(HttpMethod.Get, "v1/company/tracking-statuses"),
             ct);
         return result?.AsReadOnly() ?? (IReadOnlyList<TrackingStatusDto>)Array.Empty<TrackingStatusDto>();
     }
@@ -87,7 +87,7 @@ public class StratusApiClient : IStratusApiClient
     public async Task<IReadOnlyList<FieldDto>> GetCompanyFieldsAsync(CancellationToken ct = default)
     {
         var result = await SendWithRetryAsync<List<FieldDto>>(
-            () => BuildRequest(HttpMethod.Get, "company/fields"),
+            () => BuildRequest(HttpMethod.Get, "v1/company/fields"),
             ct);
         return result?.AsReadOnly() ?? (IReadOnlyList<FieldDto>)Array.Empty<FieldDto>();
     }
